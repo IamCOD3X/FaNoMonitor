@@ -82,7 +82,7 @@ fanomonitor_out/
 
 - ✔ Sample Log Entry
 ```
-1695821443000|PID=1523|PROC=com.example.app|PATH=/sdcard/Download/file.txt|TYPE=OPEN
+1695821443000|PID=1523|UID=10166|PROC=com.example.app|PATH=/sdcard/Download/file.txt|TYPE=OPEN
 ```
 - ✔ Log File Location
 ```
