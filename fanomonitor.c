@@ -67,7 +67,24 @@ static char *get_process_name_from_pid(pid_t pid, char *buf, size_t size) {
     return buf;
 }
 
-/* Send event to socket + logcat + file */
+static int get_uid_from_pid(pid_t pid) {
+    char path[64];
+    snprintf(path, sizeof(path), "/proc/%d/status", pid);
+    FILE *fp = fopen(path, "r");
+    if (!fp) return -1;
+
+    char line[256];
+    int uid = -1;
+    while (fgets(line, sizeof(line), fp)) {
+        if (strncmp(line, "Uid:", 4) == 0) {
+            sscanf(line, "Uid:\t%d", &uid);
+            break;
+        }
+    }
+    fclose(fp);
+    return uid;
+}
+
 static void send_event(int sockfd, struct fanotify_event_metadata *meta) {
     char path[PATH_MAX] = {0};
     char proc[256] = {0};
@@ -85,11 +102,12 @@ static void send_event(int sockfd, struct fanotify_event_metadata *meta) {
     const char *fpath = get_file_path_from_fd(meta->fd, path, sizeof(path)) ? path : "unknown";
     const char *pname = get_process_name_from_pid(meta->pid, proc, sizeof(proc)) ? proc : "unknown";
 
+    int uid = get_uid_from_pid(meta->pid);
     long ts = (long)time(NULL) * 1000L;
 
     char line[2048];
-    snprintf(line, sizeof(line), "%ld|PID=%d|PROC=%s|PATH=%s|TYPE=%s",
-             ts, meta->pid, pname, fpath, etype);
+    snprintf(line, sizeof(line), "%ld|PID=%d|UID=%d|PROC=%s|PATH=%s|TYPE=%s",
+             ts, meta->pid, uid, pname, fpath, etype);
 
     // 🔹 Send to logcat
     LOGI("%s", line);
