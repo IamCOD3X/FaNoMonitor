@@ -31,7 +31,7 @@
 #define LOG_TAG "FANOMonitor"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO,  LOG_TAG, __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
-#define LOGW(...) __android_log_print(ANDROID_LOG_WARNING, LOG_TAG, __VA_ARGS__)
+#define LOGW(...) __android_log_print(ANDROID_LOG_WARN, LOG_TAG, __VA_ARGS__)
 
 #define FANOTIFY_BUFFER_SIZE 8192
 
@@ -181,7 +181,7 @@ int main(int argc, char *argv[]) {
 		                     masks[i], AT_FDCWD, "/") == 0) {
 		LOGI("Supported mask: %s (0x%llx)", mask_names[i], masks[i]);
 	    } else {
-		LOGE("Mask %s (0x%llx) failed: %s",
+		LOGW("Mask %s (0x%llx) failed: %s",
 		     mask_names[i], masks[i], strerror(errno));
 	    }
 	}
