@@ -85,6 +85,25 @@ static int get_uid_from_pid(pid_t pid) {
     return uid;
 }
 
+const char* resolve_package_from_uid(int uid, char *out, size_t outSize) {
+    FILE *fp = fopen("/data/system/packages.list", "r");
+    if (!fp) return NULL;
+    char line[512];
+    while (fgets(line, sizeof(line), fp)) {
+        int pkgUid;
+        char pkgName[256];
+        if (sscanf(line, "%255s %d", pkgName, &pkgUid) == 2) {
+            if (pkgUid == uid) {
+                strncpy(out, pkgName, outSize);
+                fclose(fp);
+                return out;
+            }
+        }
+    }
+    fclose(fp);
+    return NULL;
+}
+
 static void send_event(int sockfd, struct fanotify_event_metadata *meta) {
     char path[PATH_MAX] = {0};
     char proc[256] = {0};
@@ -104,10 +123,13 @@ static void send_event(int sockfd, struct fanotify_event_metadata *meta) {
 
     int uid = get_uid_from_pid(meta->pid);
     long ts = (long)time(NULL) * 1000L;
+    
+    char pkgName[256] = "unknown";
+    resolve_package_from_uid(uid, pkgName, sizeof(pkgName));
 
     char line[2048];
-    snprintf(line, sizeof(line), "%ld|PID=%d|UID=%d|PROC=%s|PATH=%s|TYPE=%s",
-             ts, meta->pid, uid, pname, fpath, etype);
+    snprintf(line, sizeof(line), "%ld|PID=%d|UID=%d|PROC=%s|PATH=%s|TYPE=%s|PKG=%s",
+             ts, meta->pid, uid, pname, fpath, etype, pkgName);
 
     // 🔹 Send to logcat
     LOGI("%s", line);
